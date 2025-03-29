@@ -16,7 +16,7 @@ interface Content {
   features: Feature[];
 }
 
-export default function Home() {
+function App() {
   const content: Content = {
     tag: "Solution",
     title: "Verify - a simple invitation to check before you Trust",
@@ -40,11 +40,21 @@ export default function Home() {
   };
 
   const [activeFeature, setActiveFeature] = useState<number>(0);
+  const [isTransitioning, setIsTransitioning] = useState(false);
   const featuresContainerRef = useRef<HTMLDivElement>(null);
   const isScrolling = useRef(false);
-  const scrollEndTimer = useRef<NodeJS.Timeout | null>(null);
 
-  // Handle wheel events for tab switching
+  const handleFeatureChange = (index: number) => {
+    if (isTransitioning) return;
+
+    setIsTransitioning(true);
+    setActiveFeature(index);
+
+    setTimeout(() => {
+      setIsTransitioning(false);
+    }, 400); // Match this with the CSS transition duration
+  };
+
   useEffect(() => {
     const container = featuresContainerRef.current;
     if (!container) return;
@@ -52,17 +62,15 @@ export default function Home() {
     const handleWheel = (e: WheelEvent) => {
       e.preventDefault();
 
-      if (isScrolling.current) return;
+      if (isScrolling.current || isTransitioning) return;
       isScrolling.current = true;
 
       if (e.deltaY > 0) {
-        // Scroll down - next feature
-        setActiveFeature((prev) =>
-          Math.min(prev + 1, content.features.length - 1)
+        handleFeatureChange(
+          Math.min(activeFeature + 1, content.features.length - 1)
         );
       } else {
-        // Scroll up - previous feature
-        setActiveFeature((prev) => Math.max(prev - 1, 0));
+        handleFeatureChange(Math.max(activeFeature - 1, 0));
       }
 
       setTimeout(() => {
@@ -74,61 +82,75 @@ export default function Home() {
     return () => {
       container.removeEventListener("wheel", handleWheel);
     };
-  }, [content.features.length]);
+  }, [
+    activeFeature,
+    content.features.length,
+    handleFeatureChange,
+    isTransitioning,
+  ]);
 
   return (
-    <main>
-      <section className="md:p-12 h-screen flex items-center relative">
-        {/* Background image with lower z-index */}
+    <main className="bg-gradient-to-br from-purple-900 to-black">
+      <section className="md:p-12 h-screen flex items-center relative overflow-hidden">
         <div
-          className="w-full h-full absolute left-0 top-0"
           style={{
-            backgroundImage: `url('${bg.src}')`,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-            backgroundRepeat: "no-repeat",
-            zIndex: 1, // Lower z-index
+            backgroundImage: `url(${bg.src})`,
           }}
+          className="absolute inset-0 bg-cover bg-center"
         ></div>
 
-        {/* Content container with higher z-index */}
-        <div className="max-w-[1072px] mx-auto relative z-10">
-          {" "}
-          {/* Added z-10 here */}
-          {/* Tag */}
-          <div className="inline-block px-4 py-1 mb-12 bg-white/10 border border-white/40 rounded-xl text-white font-bold">
+        <div className="max-w-[1072px] mx-auto relative z-10 px-5 md:px-10">
+          <div className="inline-block px-4 py-1 mb-12 bg-white/10 backdrop-blur-sm border border-white/40 rounded-xl text-white font-bold transform hover:scale-105 transition-transform duration-300">
             {content.tag}
           </div>
+
           <div className="flex flex-col md:flex-row gap-8">
-            {/* Left side - Text content */}
-            <div className="md:w-1/2">
-              <h1 className="text-3xl md:text-4xl font-semibold text-[#FFFCFF] mb-14">
+            <div className="md:w-1/2 transform transition-all duration-500">
+              <h1 className="text-center md:text-left text-xl sm:text-3xl md:text-4xl font-semibold text-[#FFFCFF] mb-14">
                 {content.title}
               </h1>
-              <p className="text-white/70 text-lg">
-                {content.features[activeFeature].description}
-              </p>
+              <div className="relative h-[60px] overflow-hidden flex justify-center md:justify-start">
+                <p
+                  className="text-white/70 text-lg absolute transition-all duration-500 ease-in-out "
+                  style={{
+                    transform: `translateY(${-activeFeature * 100}%)`,
+                    opacity: isTransitioning ? 0 : 1,
+                  }}
+                >
+                  {content.features[activeFeature].description}
+                </p>
+              </div>
             </div>
 
-            {/* Right side - Features (no scroll) */}
             <div className="md:w-1/2 space-y-6" ref={featuresContainerRef}>
               {content.features.map((feature, index) => (
                 <div
                   key={index}
-                  className={`relative pl-10 transition-all duration-300 flex flex-col justify-center cursor-pointer ${
-                    index === activeFeature
-                      ? " border-[#EDEDED]/30 bg-[#CBA9FF]/30 p-6 rounded-xl"
-                      : "opacity-70 hover:opacity-90"
-                  }`}
-                  onClick={() => setActiveFeature(index)}
+                  className={`
+                    relative pl-10 transition-all duration-500 ease-in-out 
+                    flex flex-col justify-center cursor-pointer 
+                    transform hover:translate-x-2
+                    ${
+                      index === activeFeature
+                        ? "border-[#EDEDED]/30 bg-[#CBA9FF]/30 backdrop-blur-sm p-6 rounded-xl scale-105"
+                        : "opacity-70 hover:opacity-90"
+                    }
+                  `}
+                  onClick={() => handleFeatureChange(index)}
                 >
-                  {index === activeFeature && (
-                    <div className="absolute left-1 top-1/2 transform -translate-y-1/2 w-1 h-[54px] bg-white" />
-                  )}
-                  <h2 className="text-[28px] font-bold text-white">
+                  <div
+                    className={`
+                      absolute left-1 top-1/2 transform -translate-y-1/2 
+                      w-1 h-[54px] bg-white transition-all duration-500 
+                      ${index === activeFeature ? "opacity-100" : "opacity-0"}
+                    `}
+                  />
+                  <h2 className="text-[28px] font-bold text-white transform transition-all duration-300">
                     {feature.title}
                   </h2>
-                  <p className="mt-2 text-white/70">{feature.description}</p>
+                  <p className="mt-2 text-white/70 transition-all duration-300">
+                    {feature.description}
+                  </p>
                 </div>
               ))}
             </div>
@@ -138,3 +160,5 @@ export default function Home() {
     </main>
   );
 }
+
+export default App;
