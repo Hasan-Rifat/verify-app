@@ -99,9 +99,11 @@ function App() {
           className="absolute inset-0 bg-cover bg-center"
         ></div>
 
-        <div className="max-w-[1072px] mx-auto relative z-10 px-5 md:px-10">
-          <div className="inline-block px-4 py-1 mb-12 bg-white/10 backdrop-blur-sm border border-white/40 rounded-xl text-white font-bold transform hover:scale-105 transition-transform duration-300">
-            {content.tag}
+        <div className="max-w-[1072px] mx-auto relative z-10  px-10">
+          <div className="flex items-center md:justify-start justify-center mb-3 md:mb-4">
+            <span className="px-4 py-1  bg-white/10 backdrop-blur-sm border border-white/40 rounded-xl text-white font-bold transform hover:scale-105 transition-transform duration-300">
+              {content.tag}
+            </span>
           </div>
 
           <div className="flex flex-col md:flex-row gap-8">
